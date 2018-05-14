@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 #include <netinet/in.h>
 #include <linux/netfilter.h>
 #include <libnetfilter_queue/libnetfilter_queue.h>
@@ -18,14 +19,19 @@ typedef struct nfq_q_handle nfq_q_handle;
 typedef struct nfqnl_msg_packet_hdr nfqnl_msg_packet_hdr;
 
 int queue_processor(nfq_q_handle *CrtHandle, nfgenmsg *nfmsg,
-                     nfq_data *packet_handler, void *data)
+                    nfq_data *packet_handler, void *data)
 {
     int pktLen;
     int id;
     uint32_t statusTCP = NF_ACCEPT;
     uint8_t* packet;
+    char* ptr_data;
+    char* totototot;
+    char test_data[1000];
     IP* ipHeader;
     TCP* tcpHeader;
+    char site_name[1000];
+    int data_size;
     nfqnl_msg_packet_hdr *packetHeader;
 
     packetHeader = nfq_get_msg_packet_hdr(packet_handler);
@@ -39,10 +45,30 @@ int queue_processor(nfq_q_handle *CrtHandle, nfgenmsg *nfmsg,
     {
         tcpHeader = (TCP*)(packet+(ipHeader->IHL << 2));
         if (ntohs(tcpHeader->DstPort) == HTTP_PORT ||
-            ntohs(tcpHeader->SrcPort) == HTTP_PORT)
+                ntohs(tcpHeader->SrcPort) == HTTP_PORT)
         {
-                printf("[BLOCK] HTTP!\n");
-                statusTCP = NF_DROP;
+            data_size = ntohs(ipHeader->TotalLength) - (ipHeader->IHL << 2) + (tcpHeader->HeaderLength<<2);
+            //printf("tcpHeader len : %d\n", tcpHeader->HeaderLength);
+            ptr_data = (char*)(packet + (ipHeader->IHL << 2) + (tcpHeader->HeaderLength<<2));
+            if(!strncmp(ptr_data,"GET",3))
+            {
+                strcpy(test_data, ptr_data);
+                totototot = strstr(test_data, "Host: ");
+                if(totototot == NULL)
+                {
+                    statusTCP = NF_DROP;
+                }
+                else
+                {
+                    sscanf(totototot, "Host: %s\r\n", site_name);
+                    printf("site_name : %s\n", site_name);
+                    if(!strcmp(site_name,"test.gilgil.net"))
+                    {
+                        statusTCP = NF_DROP;
+                    }
+                }
+            }
+
         }
     }
 

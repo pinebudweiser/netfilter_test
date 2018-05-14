@@ -23,8 +23,8 @@ typedef struct TransControlProtocol{
         uint16_t SrcPort;
         uint16_t DstPort;
         uint32_t UnUse1[2];
-        uint8_t HeaderLength:4;
         uint8_t Reserved:4;
+        uint8_t HeaderLength:4;
         uint8_t UnUse[0]; // (HeaderLength<<2) - BASIC_TCP_HEADER_SUB, 13Byte
 }TCP;
 #pragma pack(pop)
